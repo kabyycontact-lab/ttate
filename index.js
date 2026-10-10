@@ -2,9 +2,9 @@ require('dotenv').config();
 
 const { Client, GatewayIntentBits, Collection, Events } = require('discord.js');
 
-const config = require('./config');
-const commandList = require('./commands');
-const { startScheduler, err, hasAccess, applyMuteOverwrites, MUTE_ROLE_NAME } = require('./utils');
+const config = require('./mod-config');
+const commandList = require('./mod-commands');
+const { startScheduler, err, hasAccess, applyMuteOverwrites, MUTE_ROLE_NAME } = require('./mod-utils');
 
 const client = new Client({
   intents: [
