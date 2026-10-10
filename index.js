@@ -1,12 +1,10 @@
 require('dotenv').config();
 
-const fs = require('fs');
-const path = require('path');
 const { Client, GatewayIntentBits, Collection, Events } = require('discord.js');
 
 const config = require('./config');
-const { startScheduler } = require('./utils/scheduler');
-const { err, hasAccess, applyMuteOverwrites, MUTE_ROLE_NAME } = require('./utils/helpers');
+const commandList = require('./commands');
+const { startScheduler, err, hasAccess, applyMuteOverwrites, MUTE_ROLE_NAME } = require('./utils');
 
 const client = new Client({
   intents: [
@@ -21,9 +19,7 @@ const client = new Client({
 
 // Chargement des commandes
 client.commands = new Collection();
-const commandsDir = path.join(__dirname, 'commands');
-for (const file of fs.readdirSync(commandsDir).filter((f) => f.endsWith('.js'))) {
-  const cmd = require(path.join(commandsDir, file));
+for (const cmd of commandList) {
   client.commands.set(cmd.name, cmd);
   for (const alias of cmd.aliases || []) client.commands.set(alias, cmd);
 }
@@ -56,7 +52,7 @@ client.on(Events.MessageCreate, async (message) => {
     await cmd.run(message, args, client);
   } catch (error) {
     console.error(`Erreur dans ${config.prefix}${name} :`, error);
-    message.reply({ embeds: [err('Une erreur est survenue pendant l\'exécution de la commande.')] }).catch(() => {});
+    message.reply({ embeds: [err("Une erreur est survenue pendant l'exécution de la commande.")] }).catch(() => {});
   }
 });
 
