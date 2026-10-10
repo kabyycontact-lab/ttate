@@ -1,0 +1,16 @@
+{
+  "name": "bot-moderation",
+  "version": "1.0.0",
+  "description": "Bot Discord de modération (préfixe +)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "discord.js": "^14.16.0",
+    "dotenv": "^16.4.5"
+  }
+}
