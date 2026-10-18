@@ -703,18 +703,37 @@ const cmd = {
   perm: null,
 
   async run(message, args, client) {
-    const target = (args.find((a) => a.toLowerCase() !== 'show') || '').toLowerCase();
+    const { normalizeRoleName } = require('./mod-utils');
+    const target = (args.find((a) => a.toLowerCase() !== 'show') || 'mod').toLowerCase();
 
-    if (target !== 'mod') {
-      return message.reply({ embeds: [err(`Usage : \`${config.prefix}cmds mod\``)] });
-    }
-    const level = getLevel(message.member);
-    if (level <= 0) {
+    const viewerLevel = getLevel(message.member);
+    if (viewerLevel <= 0) {
       return message.reply({ embeds: [err("Tu n'as pas la permission « Mod ».")] });
     }
 
-    // Commandes que ce membre peut utiliser (les alias pointent vers le même objet)
-    const commands = [...new Set(client.commands.values())].filter((c) => canUse(message.member, c.name));
+    // `+cmds mod` = tes propres commandes ; `+cmds helper|modo|chef|responsable` = celles d'un rôle
+    let level = viewerLevel;
+    let title = '📖 Commandes accessibles avec la permission "Mod"';
+    if (target !== 'mod') {
+      const wanted = normalizeRoleName(target);
+      const role = config.staffRoles.find(
+        (r) => normalizeRoleName(r.name) === wanted || (r.aliases || []).includes(wanted),
+      );
+      if (!role) {
+        const names = config.staffRoles.map((r) => `\`${r.aliases?.[0] || normalizeRoleName(r.name)}\``).join(', ');
+        return message.reply({
+          embeds: [err(`Usage : \`${config.prefix}cmds mod\` ou \`${config.prefix}cmds <rôle>\` (${names})`)],
+        });
+      }
+      level = role.level;
+      title = `📖 Commandes accessibles avec le rôle "${role.name.replace(/^[^\p{L}\p{N}]+/u, '')}"`;
+    }
+
+    // Commandes de ce niveau (les alias pointent vers le même objet)
+    const commands = [...new Set(client.commands.values())].filter((c) => {
+      const required = config.commandLevels[c.name];
+      return required === undefined || level >= required;
+    });
 
     let description = `Niveau : \`${level}\`\nPréfixe : \`${config.prefix}\`\n`;
 
@@ -729,7 +748,7 @@ const cmd = {
 
     const embed = new EmbedBuilder()
       .setColor(config.embedColor)
-      .setTitle('📖 Commandes accessibles avec la permission "Mod"')
+      .setTitle(title)
       .setDescription(description);
 
     if (config.cmdsInDM) {
