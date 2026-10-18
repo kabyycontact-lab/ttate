@@ -8,10 +8,11 @@ module.exports = {
   // donc "・Modérateur" correspond à "Modérateur". Tu peux aussi ajouter `id: '123…'`
   // (ID du rôle) pour être sûr à 100 %.
   staffRoles: [
-    { name: '・Helper', level: 20 },
-    { name: '・Modérateur', level: 40 },
-    { name: '・Chef Modérateur', level: 60 },
-    { name: '・Responsable Staff', level: 100 },
+    // `aliases` = mots acceptés après +cmds (ex: +cmds helper, +cmds modo, +cmds chef…)
+    { name: '・Helper', level: 20, aliases: ['helper'] },
+    { name: '・Modérateur', level: 40, aliases: ['moderateur', 'modo'] },
+    { name: '・Chef Modérateur', level: 60, aliases: ['chef', 'chefmod', 'chefmodo', 'chefmoderateur'] },
+    { name: '・Responsable Staff', level: 100, aliases: ['responsable', 'resp', 'staff', 'responsablestaff'] },
   ],
 
   // Niveau minimum requis pour chaque commande.
