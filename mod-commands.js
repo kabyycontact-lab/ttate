@@ -329,9 +329,10 @@ const cmd = {
 // ===== +warnlist =====
 commands.push(
   (() => {
-const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
+const config = require('./mod-config');
 const db = require('./mod-utils').db;
-const { resolveUser, hasAccess, err } = require('./mod-utils');
+const { resolveUser, getLevel, err } = require('./mod-utils');
 
 const cmd = {
   name: 'warnlist',
@@ -344,7 +345,7 @@ const cmd = {
     let user = message.author;
 
     if (args[0]) {
-      if (!hasAccess(message.member, PermissionFlagsBits.ModerateMembers)) {
+      if (getLevel(message.member) < config.warnlistOthersLevel) {
         return message.reply({ embeds: [err("Tu n'as pas la permission de voir les warns des autres membres.")] });
       }
       user = await resolveUser(client, args[0]);
@@ -685,9 +686,9 @@ const cmd = {
 // ===== +cmds =====
 commands.push(
   (() => {
-const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const config = require('./mod-config');
-const { hasAccess, err } = require('./mod-utils');
+const { getLevel, canUse, err } = require('./mod-utils');
 
 const CATEGORIES = [
   { name: 'Modération', emoji: '🔨' },
@@ -707,14 +708,15 @@ const cmd = {
     if (target !== 'mod') {
       return message.reply({ embeds: [err(`Usage : \`${config.prefix}cmds mod\``)] });
     }
-    if (!hasAccess(message.member, PermissionFlagsBits.ModerateMembers)) {
+    const level = getLevel(message.member);
+    if (level <= 0) {
       return message.reply({ embeds: [err("Tu n'as pas la permission « Mod ».")] });
     }
 
-    // Commandes uniques (les alias pointent vers le même objet)
-    const commands = [...new Set(client.commands.values())];
+    // Commandes que ce membre peut utiliser (les alias pointent vers le même objet)
+    const commands = [...new Set(client.commands.values())].filter((c) => canUse(message.member, c.name));
 
-    let description = `Niveau : \`${config.level}\`\nPréfixe : \`${config.prefix}\`\n`;
+    let description = `Niveau : \`${level}\`\nPréfixe : \`${config.prefix}\`\n`;
 
     for (const { name, emoji } of CATEGORIES) {
       const lines = commands
