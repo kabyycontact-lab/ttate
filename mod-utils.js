@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const config = require('./mod-config');
 
 // ===== Base de données (JSON) =====
@@ -120,9 +120,38 @@ function checkHierarchy(message, user, member) {
   return null;
 }
 
-function hasAccess(member, perm) {
-  if (config.modRoleIds.some((id) => member.roles.cache.has(id))) return true;
-  return member.permissions.has(perm);
+// "・Chef Modérateur" -> "chefmoderateur" (sans symbole, sans accent, en minuscules)
+function normalizeRoleName(name) {
+  return String(name)
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .toLowerCase();
+}
+
+const MAX_LEVEL = Math.max(0, ...config.staffRoles.map((r) => r.level));
+
+// Niveau du membre = niveau de son plus haut rôle staff (0 = aucun rôle staff)
+function getLevel(member) {
+  if (member.id === member.guild.ownerId) return MAX_LEVEL;
+  if (config.adminsBypass && member.permissions.has(PermissionFlagsBits.Administrator)) return MAX_LEVEL;
+
+  let level = 0;
+  for (const entry of config.staffRoles) {
+    const wanted = normalizeRoleName(entry.name);
+    const has = member.roles.cache.some(
+      (r) => (entry.id && r.id === entry.id) || normalizeRoleName(r.name) === wanted,
+    );
+    if (has) level = Math.max(level, entry.level);
+  }
+  return level;
+}
+
+// Le membre a-t-il le droit d'utiliser cette commande ?
+function canUse(member, commandName) {
+  const required = config.commandLevels[commandName];
+  if (required === undefined) return true;
+  return getLevel(member) >= required;
 }
 
 function auditReason(message, reason) {
@@ -206,7 +235,8 @@ module.exports = {
   resolveMember,
   resolveChannel,
   checkHierarchy,
-  hasAccess,
+  getLevel,
+  canUse,
   auditReason,
   dm,
   applyMuteOverwrites,
