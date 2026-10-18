@@ -4,7 +4,7 @@ const { Client, GatewayIntentBits, Collection, Events } = require('discord.js');
 
 const config = require('./mod-config');
 const commandList = require('./mod-commands');
-const { startScheduler, err, hasAccess, applyMuteOverwrites, MUTE_ROLE_NAME } = require('./mod-utils');
+const { startScheduler, err, canUse, applyMuteOverwrites, MUTE_ROLE_NAME } = require('./mod-utils');
 
 const client = new Client({
   intents: [
@@ -44,7 +44,7 @@ client.on(Events.MessageCreate, async (message) => {
   const cmd = client.commands.get(name);
   if (!cmd) return;
 
-  if (cmd.perm && !hasAccess(message.member, cmd.perm)) {
+  if (!canUse(message.member, cmd.name)) {
     return message.reply({ embeds: [err("Tu n'as pas la permission d'utiliser cette commande.")] });
   }
 
