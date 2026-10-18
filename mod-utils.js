@@ -237,6 +237,7 @@ module.exports = {
   checkHierarchy,
   getLevel,
   canUse,
+  normalizeRoleName,
   auditReason,
   dm,
   applyMuteOverwrites,
